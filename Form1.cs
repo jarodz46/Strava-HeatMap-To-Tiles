@@ -20,6 +20,8 @@ namespace StravaHeatMapToKMZ
         public Form1()
         {
             InitializeComponent();
+            mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
+            mapControl.TileServer = new OpenStreetMapTileServer("stravatiledownloader");
             mapStyle.SelectedIndex = 0;
             activityType.SelectedIndex = 0;
             SetButtonsState(false);
@@ -32,6 +34,22 @@ namespace StravaHeatMapToKMZ
                 SetButtonsState(true);
             };
 
+        }
+
+        async Task<string?> GetCookierValByName(string name)
+        {
+            var cookies = await webView21.CoreWebView2.CookieManager.GetCookiesAsync("");
+            foreach (var cookie in cookies)
+            {
+
+                if (cookie.Name == name)
+                {
+                    Debug.WriteLine(cookie.Name + " : " + cookie.Value);
+                    return cookie.Value;
+                }
+            }
+
+            return null;
         }
 
         void SetButtonsState(bool enabled)
@@ -70,17 +88,6 @@ namespace StravaHeatMapToKMZ
             {
                 return new Uri("https://www.strava.com/heatmap");
             }
-        }
-
-        bool CheckUri()
-        {
-            if (!webView21.Source.ToString().StartsWith(StravaHeatMapUri.ToString()))
-            {
-                MessageBox.Show("You must be on strava heatmap page !");
-                webView21.Source = StravaHeatMapUri;
-                return false;
-            }
-            return true;
         }
 
         async Task WaitForMapIdle(WebView2DevToolsContext devToolsContext)
@@ -182,12 +189,10 @@ namespace StravaHeatMapToKMZ
 
         private async void createKMZ_Click(object sender, EventArgs e)
         {
-            if (!CheckUri())
-                return;
 
             SetButtonsState(false);
 
-            var viewInfos = await GetTilesInfosForCurrentView((int)tileZoom.Value);
+            var viewInfos = GetTilesInfosForCurrentView((int)tileZoom.Value);
 
             MemoryStream mZipStream = new();
             ZipArchive archive = new(mZipStream, ZipArchiveMode.Update, true);
@@ -276,8 +281,6 @@ namespace StravaHeatMapToKMZ
 
         private async void updateKMZ_ClickAsync(object sender, EventArgs e)
         {
-            if (!CheckUri())
-                return;
 
             OpenFileDialog openFileDialog = new();
             openFileDialog.DefaultExt = "kmz";
@@ -420,17 +423,18 @@ namespace StravaHeatMapToKMZ
             public double centerLng = 0;
         }
 
-        async Task<ViewInfos> GetTilesInfosForCurrentView(int zoom)
+        ViewInfos GetTilesInfosForCurrentView(int zoom)
         {
             var viewInfos = new ViewInfos();
 
-            await using var devToolsContext = await webView21.CoreWebView2.CreateDevToolsContextAsync();
+            //await using var devToolsContext = await webView21.CoreWebView2.CreateDevToolsContextAsync();
 
-            var bScript = "(value) => ({east: map.getBounds().getEast(), west: map.getBounds().getWest(), north: map.getBounds().getNorth(), south: map.getBounds().getSouth()}) ";
-            var bounds = await devToolsContext.EvaluateFunctionAsync<dynamic>(bScript);
+            //var bScript = "(value) => ({east: map.getBounds().getEast(), west: map.getBounds().getWest(), north: map.getBounds().getNorth(), south: map.getBounds().getSouth()}) ";
+            //var bounds = await devToolsContext.EvaluateFunctionAsync<dynamic>(bScript);
+           
 
-            var minPoint = Tile.WorldToTilePos(bounds.west, bounds.north, zoom);
-            var maxPoint = Tile.WorldToTilePos(bounds.east, bounds.south, zoom);
+            var minPoint = Tile.WorldToTilePos(mapControl.TopLeft.Longitude, mapControl.TopLeft.Latitude, zoom);
+            var maxPoint = Tile.WorldToTilePos(mapControl.BottomRight.Longitude, mapControl.BottomRight.Latitude, zoom);
 
             for (double x = Math.Floor(minPoint.X); x <= Math.Floor(maxPoint.X); x++)
             {
@@ -440,12 +444,9 @@ namespace StravaHeatMapToKMZ
                 }
             }
 
-            var cScript = "(value) => ({lng: map.getCenter().lng, lat: map.getCenter().lat}) ";
-            var center = await devToolsContext.EvaluateFunctionAsync<dynamic>(cScript);
-            viewInfos.centerLat = center.lat;
-            viewInfos.centerLng = center.lng;
+            viewInfos.centerLat = mapControl.Center.Latitude;
+            viewInfos.centerLng = mapControl.Center.Longitude;
 
-            await devToolsContext.DisposeAsync();
 
             return viewInfos;
         }
@@ -457,23 +458,32 @@ namespace StravaHeatMapToKMZ
             none,
         }
 
+        const int PicBoxSize = 200;
+
         static SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
         async Task<bool> CreateTiles(Action<MemoryStream, Tile> onTileCreated, TileFormat format, int tileSize, int zoom, List<Tile>? customTiles = null)
         {
-            if (!CheckUri())
+            //if (!CheckUri())
+            //    return false;
+
+            var pair = await GetCookierValByName("CloudFront-Key-Pair-Id");
+            var policy = await GetCookierValByName("CloudFront-Policy");
+            var signature = await GetCookierValByName("CloudFront-Signature");
+
+            if (pair == null || policy == null || signature == null)
                 return false;
 
             abordWork = false;
 
             SetButtonsState(false);
 
-            var finalFormat = format == TileFormat.png ? CoreWebView2CapturePreviewImageFormat.Png : CoreWebView2CapturePreviewImageFormat.Jpeg;
+            var finalFormat = format == TileFormat.png ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg;
 
             progressBar1.Value = 0;
             var tiles = new List<Tile>();
             if (customTiles == null)
             {
-                var viewInfos = await GetTilesInfosForCurrentView(zoom);
+                var viewInfos = GetTilesInfosForCurrentView(zoom);
                 tiles = viewInfos.tiles;
             }
             else
@@ -502,95 +512,73 @@ namespace StravaHeatMapToKMZ
                 tiles.RemoveRange(0, tilesToTake);
             }
 
-            webView21.Visible = false;
+            tabControl1.SelectedIndex = 2;
             foreach (var tileWork in tileWorks)
             {
                 var newFlow = new FlowLayoutPanel();
                 newFlow.FlowDirection = FlowDirection.LeftToRight;
-                newFlow.Size = new Size(tileSize, tileSize + 15);
+                newFlow.Size = new Size(PicBoxSize, PicBoxSize + 15);
 
                 var newProgressBar = new System.Windows.Forms.ProgressBar();
-                newProgressBar.Size = new Size(tileSize, 10);
+                newProgressBar.Size = new Size(PicBoxSize, 10);
                 newProgressBar.Style = ProgressBarStyle.Continuous;
 
-                var newWebView = new Microsoft.Web.WebView2.WinForms.WebView2();
-                newWebView.Enabled = false;
-                newWebView.Source = new Uri("https://www.strava.com/heatmap", UriKind.Absolute);
-                newWebView.Size = new Size(tileSize, tileSize);
+                var newPictureBox = new PictureBox();
+                newPictureBox.Enabled = false;
+                newPictureBox.Size = new Size(PicBoxSize, PicBoxSize);
 
-                newFlow.Controls.Add(newWebView);
+                newFlow.Controls.Add(newPictureBox);
                 newFlow.Controls.Add(newProgressBar);
 
                 flowLayoutPanel1.Controls.Add(newFlow);
 
-                newWebView.NavigationCompleted += async (sender, args) =>
+                newProgressBar.Maximum = tileWork.Count;
+                var nextTileWork = delegate()
                 {
-                    await Task.Delay(1000);
+                    if (abordWork)
+                        return;
 
-                    switch (mapStyle.SelectedIndex)
-                    {
-                        case 0: // none
-                            await newWebView.ExecuteScriptAsync("document.getElementById('view-maps').click();");
-                            break;
-                        case 1: // dark
-                            break;
-                        case 2: // winter
-                            await newWebView.ExecuteScriptAsync("document.querySelector('input[name=map_style][value=\"winter\"]').click();");
-                            break;
-                        case 3: // satellite
-                            await newWebView.ExecuteScriptAsync("document.querySelector('input[name=map_style][value=\"satellite\"]').click();");
-                            break;
-                    }
+                    if (newProgressBar.Value > tileWork.Count - 1)
+                        return;
 
-                    await Task.Delay(1000);
+                    var tile = tileWork[newProgressBar.Value];
 
-                    switch (activityType.SelectedIndex)
-                    {
-                        case 0: // all
-                            break;
-                        case 1: // bikes
-                            await newWebView.ExecuteScriptAsync("document.querySelector('input[name=map_type][value=\"ride\"]').click();");
-                            break;
-                        case 2: // runs
-                            await newWebView.ExecuteScriptAsync("document.querySelector('input[name=map_type][value=\"run\"]').click();");
-                            break;
-                    }
+                    MemoryStream memoryStream = new();
 
-                    WebView2DevToolsContext devToolsContext;
-                    await semaphoreSlim.WaitAsync();
+                    string[] sub = { "a", "b", "c" };
+                    var usedSub = sub[new Random().Next(sub.Length)];
+
+                    var url_prefix = "https://heatmap-external-" + usedSub + ".strava.com/tiles-auth/";
+                    var url_suffix = "/" + zoom + "/" + tile.x1 + "/" + tile.y1 + ".png";
+                    var map_type = "all";
+                    var map_color = "hot";
+                    var query_string = "?Key-Pair-Id=" + pair + "&Policy=" + policy + "&Signature=" + signature;
+                    var tile_url = url_prefix + map_type + '/' + map_color + url_suffix + query_string;
+                    //MessageBox.Show(tile_url);
+
                     try
                     {
-                        await Task.Delay(new Random().Next(100, 1000)); // Try to fix a random crash
-                        devToolsContext = await newWebView.CoreWebView2.CreateDevToolsContextAsync();
+                        newPictureBox.LoadAsync(tile_url);
                     }
-                    finally
+                    catch
                     {
-                        semaphoreSlim.Release();
+                        MessageBox.Show("Error while getting tile");
+                        return;
                     }
+                    newPictureBox.Image.Save(memoryStream, finalFormat);
 
-                    await PrepareMap(devToolsContext, newWebView, UICommand.Hide, tileSize, zoom);
+                    onTileCreated(memoryStream, tile);
 
-                    newProgressBar.Maximum = tileWork.Count;
-                    foreach (var tile in tileWork)
-                    {
-                        if (abordWork)
-                            break;
 
-                        await FitBounds(devToolsContext, newWebView, tile.west, tile.south, tile.east, tile.north);
-
-                        MemoryStream memoryStream = new();
-                        await newWebView.CoreWebView2.CapturePreviewAsync(finalFormat, memoryStream);
-                        onTileCreated(memoryStream, tile);
-
-                        memoryStream.Close();
-
-                        progressBar1.Value++;
-                        newProgressBar.Value++;
-                    }
-
-                    await devToolsContext.DisposeAsync();
-
+                    progressBar1.Value++;
+                    newProgressBar.Value++;
                 };
+
+                newPictureBox.LoadCompleted += (obj, sender) =>
+                {
+                    nextTileWork();
+                };
+                nextTileWork();            
 
             }
 
@@ -603,7 +591,6 @@ namespace StravaHeatMapToKMZ
 
 
         end:
-            webView21.Visible = true;
             while (flowLayoutPanel1.Controls.Count > 1)
                 flowLayoutPanel1.Controls.RemoveAt(1);
             SetButtonsState(true);
@@ -750,6 +737,22 @@ namespace StravaHeatMapToKMZ
                 await CreateTiles(onTileCreated, TileFormat.png, (int)tileSize.Value, (int)tileZoom.Value, tiles);
 
             }
+        }
+
+        private void webView21_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            
+        }
+
+        async private void button1_Click(object sender, EventArgs e)
+        {
+            //webView21.ExecuteScriptAsync("let getActive = browser.tabs.query({  active: true,  currentWindow: true,}); console.log(getActive)");
+            var cookies = await webView21.CoreWebView2.CookieManager.GetCookiesAsync(string.Empty);
+            foreach (var cookie in cookies)
+            {
+                Debug.WriteLine(cookie.Name + " : " + cookie.Value);
+            }
+            // webView21.ExecuteScriptAsync("alert(document.cookie)");
         }
     }
 

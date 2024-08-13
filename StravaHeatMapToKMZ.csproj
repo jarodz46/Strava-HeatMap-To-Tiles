@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2045.28" />
-    <PackageReference Include="WebView2.DevTools.Dom" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+    <PackageReference Include="WebView2.DevTools.Dom" Version="4.0.1" />
+    <PackageReference Include="WinFormsMapControl" Version="1.1.0" />
   </ItemGroup>
 
 </Project>

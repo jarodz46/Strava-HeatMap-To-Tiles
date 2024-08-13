@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
+            mapControl = new MapControl();
             createKMZ = new Button();
             updateKMZ = new Button();
             progressBar1 = new ProgressBar();
@@ -48,25 +49,50 @@
             tileZoom = new NumericUpDown();
             label5 = new Label();
             updateTiles = new Button();
+            tabControl1 = new TabControl();
+            tabPage1 = new TabPage();
+            tabPage2 = new TabPage();
+            tabPage3 = new TabPage();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tileSize).BeginInit();
             ((System.ComponentModel.ISupportInitialize)threadCount).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tileZoom).BeginInit();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // webView21
             // 
             webView21.AllowExternalDrop = true;
-            webView21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             webView21.CreationProperties = null;
             webView21.DefaultBackgroundColor = Color.White;
+            webView21.Dock = DockStyle.Fill;
             webView21.Enabled = false;
-            webView21.Location = new Point(17, 74);
+            webView21.Location = new Point(3, 3);
             webView21.Name = "webView21";
-            webView21.Size = new Size(1503, 1000);
-            webView21.Source = new Uri("https://www.strava.com/heatmap", UriKind.Absolute);
+            webView21.Size = new Size(967, 606);
+            webView21.Source = new Uri("https://www.strava.com/maps/global-heatmap", UriKind.Absolute);
             webView21.TabIndex = 0;
             webView21.ZoomFactor = 1D;
+            webView21.NavigationCompleted += webView21_NavigationCompleted;
+            // 
+            // mapControl
+            // 
+            mapControl.Dock = DockStyle.Fill;
+            mapControl.ErrorColor = Color.Red;
+            mapControl.FitToBounds = true;
+            mapControl.Location = new Point(3, 3);
+            mapControl.Name = "mapControl";
+            mapControl.ShowThumbnails = true;
+            mapControl.Size = new Size(967, 606);
+            mapControl.TabIndex = 0;
+            mapControl.ThumbnailBackColor = Color.FromArgb(224, 224, 224);
+            mapControl.ThumbnailForeColor = Color.FromArgb(176, 176, 176);
+            mapControl.ThumbnailText = "Downloading...";
+            mapControl.TileImageAttributes = null;
+            mapControl.ZoomLevel = 5;
             // 
             // createKMZ
             // 
@@ -95,7 +121,7 @@
             progressBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             progressBar1.Location = new Point(616, 11);
             progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(840, 23);
+            progressBar1.Size = new Size(289, 23);
             progressBar1.Style = ProgressBarStyle.Continuous;
             progressBar1.TabIndex = 3;
             // 
@@ -136,7 +162,7 @@
             // abord
             // 
             abord.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            abord.Location = new Point(1460, 12);
+            abord.Location = new Point(909, 12);
             abord.Name = "abord";
             abord.Size = new Size(61, 23);
             abord.TabIndex = 7;
@@ -146,11 +172,11 @@
             // 
             // flowLayoutPanel1
             // 
-            flowLayoutPanel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             flowLayoutPanel1.AutoScroll = true;
-            flowLayoutPanel1.Location = new Point(12, 68);
+            flowLayoutPanel1.Dock = DockStyle.Fill;
+            flowLayoutPanel1.Location = new Point(3, 3);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(1514, 1010);
+            flowLayoutPanel1.Size = new Size(967, 606);
             flowLayoutPanel1.TabIndex = 8;
             // 
             // label1
@@ -213,7 +239,7 @@
             // threadCount
             // 
             threadCount.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            threadCount.Location = new Point(1488, 41);
+            threadCount.Location = new Point(937, 41);
             threadCount.Maximum = new decimal(new int[] { 8, 0, 0, 0 });
             threadCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             threadCount.Name = "threadCount";
@@ -225,7 +251,7 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.Location = new Point(1400, 45);
+            label4.Location = new Point(849, 45);
             label4.Name = "label4";
             label4.Size = new Size(82, 15);
             label4.TabIndex = 16;
@@ -261,13 +287,58 @@
             updateTiles.UseVisualStyleBackColor = true;
             updateTiles.Click += updateTiles_Click;
             // 
+            // tabControl1
+            // 
+            tabControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
+            tabControl1.Location = new Point(2, 71);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new Size(981, 640);
+            tabControl1.TabIndex = 20;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(webView21);
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(973, 612);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Strava access";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(mapControl);
+            tabPage2.Location = new Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(973, 612);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Zone selection";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(flowLayoutPanel1);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new Padding(3);
+            tabPage3.Size = new Size(973, 612);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Download";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1535, 1091);
+            ClientSize = new Size(984, 709);
+            Controls.Add(tabControl1);
             Controls.Add(updateTiles);
-            Controls.Add(webView21);
             Controls.Add(tileZoom);
             Controls.Add(label5);
             Controls.Add(label4);
@@ -278,7 +349,6 @@
             Controls.Add(label2);
             Controls.Add(mapStyle);
             Controls.Add(label1);
-            Controls.Add(flowLayoutPanel1);
             Controls.Add(abord);
             Controls.Add(createKarooTiles);
             Controls.Add(createTiles);
@@ -294,6 +364,10 @@
             ((System.ComponentModel.ISupportInitialize)tileSize).EndInit();
             ((System.ComponentModel.ISupportInitialize)threadCount).EndInit();
             ((System.ComponentModel.ISupportInitialize)tileZoom).EndInit();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage2.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -320,5 +394,10 @@
         private NumericUpDown tileZoom;
         private Label label5;
         private Button updateTiles;
+        private MapControl mapControl;
+        private TabControl tabControl1;
+        private TabPage tabPage1;
+        private TabPage tabPage2;
+        private TabPage tabPage3;
     }
 }
