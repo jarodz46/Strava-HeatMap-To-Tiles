@@ -33,7 +33,6 @@
             createKMZ = new Button();
             updateKMZ = new Button();
             progressBar1 = new ProgressBar();
-            toggleElements = new Button();
             createTiles = new Button();
             createKarooTiles = new Button();
             abord = new Button();
@@ -42,8 +41,6 @@
             mapStyle = new ComboBox();
             label2 = new Label();
             activityType = new ComboBox();
-            label3 = new Label();
-            tileSize = new NumericUpDown();
             threadCount = new NumericUpDown();
             label4 = new Label();
             tileZoom = new NumericUpDown();
@@ -51,10 +48,12 @@
             updateTiles = new Button();
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
+            bBackHome = new Button();
             tabPage2 = new TabPage();
             tabPage3 = new TabPage();
+            backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            colorDialog1 = new ColorDialog();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)tileSize).BeginInit();
             ((System.ComponentModel.ISupportInitialize)threadCount).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tileZoom).BeginInit();
             tabControl1.SuspendLayout();
@@ -66,27 +65,25 @@
             // webView21
             // 
             webView21.AllowExternalDrop = true;
+            webView21.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             webView21.CreationProperties = null;
             webView21.DefaultBackgroundColor = Color.White;
-            webView21.Dock = DockStyle.Fill;
-            webView21.Enabled = false;
-            webView21.Location = new Point(3, 3);
+            webView21.Location = new Point(3, 30);
             webView21.Name = "webView21";
-            webView21.Size = new Size(967, 606);
-            webView21.Source = new Uri("https://www.strava.com/maps/global-heatmap", UriKind.Absolute);
+            webView21.Size = new Size(700, 699);
             webView21.TabIndex = 0;
             webView21.ZoomFactor = 1D;
             webView21.NavigationCompleted += webView21_NavigationCompleted;
             // 
             // mapControl
             // 
-            mapControl.Dock = DockStyle.Fill;
+            mapControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             mapControl.ErrorColor = Color.Red;
             mapControl.FitToBounds = true;
-            mapControl.Location = new Point(3, 3);
+            mapControl.Location = new Point(3, 34);
             mapControl.Name = "mapControl";
             mapControl.ShowThumbnails = true;
-            mapControl.Size = new Size(967, 606);
+            mapControl.Size = new Size(700, 700);
             mapControl.TabIndex = 0;
             mapControl.ThumbnailBackColor = Color.FromArgb(224, 224, 224);
             mapControl.ThumbnailForeColor = Color.FromArgb(176, 176, 176);
@@ -97,7 +94,7 @@
             // createKMZ
             // 
             createKMZ.Enabled = false;
-            createKMZ.Location = new Point(12, 11);
+            createKMZ.Location = new Point(9, 7);
             createKMZ.Name = "createKMZ";
             createKMZ.Size = new Size(100, 23);
             createKMZ.TabIndex = 1;
@@ -108,7 +105,7 @@
             // updateKMZ
             // 
             updateKMZ.Enabled = false;
-            updateKMZ.Location = new Point(118, 11);
+            updateKMZ.Location = new Point(15, 11);
             updateKMZ.Name = "updateKMZ";
             updateKMZ.Size = new Size(100, 23);
             updateKMZ.TabIndex = 2;
@@ -119,30 +116,18 @@
             // progressBar1
             // 
             progressBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar1.Location = new Point(616, 11);
+            progressBar1.Location = new Point(393, 11);
             progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(289, 23);
+            progressBar1.Size = new Size(245, 23);
             progressBar1.Style = ProgressBarStyle.Continuous;
             progressBar1.TabIndex = 3;
-            // 
-            // toggleElements
-            // 
-            toggleElements.Enabled = false;
-            toggleElements.Location = new Point(1285, 40);
-            toggleElements.Name = "toggleElements";
-            toggleElements.Size = new Size(75, 23);
-            toggleElements.TabIndex = 4;
-            toggleElements.Text = "Toggle UI";
-            toggleElements.UseVisualStyleBackColor = true;
-            toggleElements.Visible = false;
-            toggleElements.Click += toggleElements_Click;
             // 
             // createTiles
             // 
             createTiles.Enabled = false;
-            createTiles.Location = new Point(234, 11);
+            createTiles.Location = new Point(115, 7);
             createTiles.Name = "createTiles";
-            createTiles.Size = new Size(75, 23);
+            createTiles.Size = new Size(100, 23);
             createTiles.TabIndex = 5;
             createTiles.Text = "Create tiles";
             createTiles.UseVisualStyleBackColor = true;
@@ -151,7 +136,7 @@
             // createKarooTiles
             // 
             createKarooTiles.Enabled = false;
-            createKarooTiles.Location = new Point(431, 11);
+            createKarooTiles.Location = new Point(208, 11);
             createKarooTiles.Name = "createKarooTiles";
             createKarooTiles.Size = new Size(179, 23);
             createKarooTiles.TabIndex = 6;
@@ -162,7 +147,7 @@
             // abord
             // 
             abord.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            abord.Location = new Point(909, 12);
+            abord.Location = new Point(642, 12);
             abord.Name = "abord";
             abord.Size = new Size(61, 23);
             abord.TabIndex = 7;
@@ -176,7 +161,7 @@
             flowLayoutPanel1.Dock = DockStyle.Fill;
             flowLayoutPanel1.Location = new Point(3, 3);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(967, 606);
+            flowLayoutPanel1.Size = new Size(700, 726);
             flowLayoutPanel1.TabIndex = 8;
             // 
             // label1
@@ -184,15 +169,15 @@
             label1.AutoSize = true;
             label1.Location = new Point(15, 45);
             label1.Name = "label1";
-            label1.Size = new Size(59, 15);
+            label1.Size = new Size(63, 15);
             label1.TabIndex = 9;
-            label1.Text = "Map Style";
+            label1.Text = "Map Color";
             // 
             // mapStyle
             // 
             mapStyle.DropDownStyle = ComboBoxStyle.DropDownList;
             mapStyle.FormattingEnabled = true;
-            mapStyle.Items.AddRange(new object[] { "None", "Dark", "Winter", "Satellite" });
+            mapStyle.Items.AddRange(new object[] { "hot", "blue", "purple", "gray", "bluered", "mobileblue" });
             mapStyle.Location = new Point(80, 42);
             mapStyle.Name = "mapStyle";
             mapStyle.Size = new Size(121, 23);
@@ -211,35 +196,16 @@
             // 
             activityType.DropDownStyle = ComboBoxStyle.DropDownList;
             activityType.FormattingEnabled = true;
-            activityType.Items.AddRange(new object[] { "All", "Bikes", "Runs" });
+            activityType.Items.AddRange(new object[] { "all", "ride", "run", "water", "winter" });
             activityType.Location = new Point(286, 40);
             activityType.Name = "activityType";
             activityType.Size = new Size(121, 23);
             activityType.TabIndex = 12;
             // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(413, 45);
-            label3.Name = "label3";
-            label3.Size = new Size(71, 15);
-            label3.TabIndex = 13;
-            label3.Text = "Tile size (px)";
-            // 
-            // tileSize
-            // 
-            tileSize.Location = new Point(490, 40);
-            tileSize.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-            tileSize.Minimum = new decimal(new int[] { 100, 0, 0, 0 });
-            tileSize.Name = "tileSize";
-            tileSize.Size = new Size(51, 23);
-            tileSize.TabIndex = 14;
-            tileSize.Value = new decimal(new int[] { 512, 0, 0, 0 });
-            // 
             // threadCount
             // 
             threadCount.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            threadCount.Location = new Point(937, 41);
+            threadCount.Location = new Point(670, 41);
             threadCount.Maximum = new decimal(new int[] { 8, 0, 0, 0 });
             threadCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             threadCount.Name = "threadCount";
@@ -251,7 +217,7 @@
             // 
             label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.Location = new Point(849, 45);
+            label4.Location = new Point(582, 45);
             label4.Name = "label4";
             label4.Size = new Size(82, 15);
             label4.TabIndex = 16;
@@ -259,7 +225,7 @@
             // 
             // tileZoom
             // 
-            tileZoom.Location = new Point(609, 40);
+            tileZoom.Location = new Point(493, 41);
             tileZoom.Maximum = new decimal(new int[] { 16, 0, 0, 0 });
             tileZoom.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
             tileZoom.Name = "tileZoom";
@@ -270,7 +236,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(547, 44);
+            label5.Location = new Point(431, 45);
             label5.Name = "label5";
             label5.Size = new Size(58, 15);
             label5.TabIndex = 17;
@@ -279,7 +245,7 @@
             // updateTiles
             // 
             updateTiles.Enabled = false;
-            updateTiles.Location = new Point(315, 11);
+            updateTiles.Location = new Point(121, 11);
             updateTiles.Name = "updateTiles";
             updateTiles.Size = new Size(81, 23);
             updateTiles.TabIndex = 19;
@@ -293,75 +259,91 @@
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
             tabControl1.Controls.Add(tabPage3);
-            tabControl1.Location = new Point(2, 71);
+            tabControl1.Location = new Point(2, 72);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(981, 640);
+            tabControl1.Size = new Size(714, 760);
             tabControl1.TabIndex = 20;
+            tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
+            tabControl1.Selecting += tabControl1_Selecting;
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(bBackHome);
             tabPage1.Controls.Add(webView21);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(973, 612);
+            tabPage1.Size = new Size(706, 732);
             tabPage1.TabIndex = 0;
-            tabPage1.Text = "Strava access";
+            tabPage1.Text = "1. Strava access";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // bBackHome
+            // 
+            bBackHome.Location = new Point(4, 4);
+            bBackHome.Name = "bBackHome";
+            bBackHome.Size = new Size(172, 23);
+            bBackHome.TabIndex = 1;
+            bBackHome.Text = "Go back to strava heatmap page";
+            bBackHome.UseVisualStyleBackColor = true;
+            bBackHome.Click += bBackHome_Click;
             // 
             // tabPage2
             // 
             tabPage2.Controls.Add(mapControl);
+            tabPage2.Controls.Add(createKMZ);
+            tabPage2.Controls.Add(createTiles);
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(973, 612);
+            tabPage2.Size = new Size(706, 732);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "Zone selection";
+            tabPage2.Text = "2. Zone selection";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // tabPage3
             // 
             tabPage3.Controls.Add(flowLayoutPanel1);
+            tabPage3.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(973, 612);
+            tabPage3.Size = new Size(706, 732);
             tabPage3.TabIndex = 2;
-            tabPage3.Text = "Download";
+            tabPage3.Text = "Download progress";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // backgroundWorker1
+            // 
+            backgroundWorker1.DoWork += backgroundWorker1_DoWork;
+            backgroundWorker1.RunWorkerCompleted += backgroundWorker1_RunWorkerCompleted;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(984, 709);
+            ClientSize = new Size(717, 835);
             Controls.Add(tabControl1);
             Controls.Add(updateTiles);
             Controls.Add(tileZoom);
             Controls.Add(label5);
             Controls.Add(label4);
             Controls.Add(threadCount);
-            Controls.Add(tileSize);
-            Controls.Add(label3);
             Controls.Add(activityType);
             Controls.Add(label2);
             Controls.Add(mapStyle);
             Controls.Add(label1);
             Controls.Add(abord);
             Controls.Add(createKarooTiles);
-            Controls.Add(createTiles);
-            Controls.Add(toggleElements);
             Controls.Add(progressBar1);
             Controls.Add(updateKMZ);
-            Controls.Add(createKMZ);
             Name = "Form1";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Strava Heatmap to KMZ";
             FormClosing += Form1_FormClosing;
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)webView21).EndInit();
-            ((System.ComponentModel.ISupportInitialize)tileSize).EndInit();
             ((System.ComponentModel.ISupportInitialize)threadCount).EndInit();
             ((System.ComponentModel.ISupportInitialize)tileZoom).EndInit();
             tabControl1.ResumeLayout(false);
@@ -378,7 +360,6 @@
         private Button createKMZ;
         private Button updateKMZ;
         private ProgressBar progressBar1;
-        private Button toggleElements;
         private Button createTiles;
         private Button createKarooTiles;
         private Button abord;
@@ -387,8 +368,6 @@
         private ComboBox mapStyle;
         private Label label2;
         private ComboBox activityType;
-        private Label label3;
-        private NumericUpDown tileSize;
         private NumericUpDown threadCount;
         private Label label4;
         private NumericUpDown tileZoom;
@@ -399,5 +378,8 @@
         private TabPage tabPage1;
         private TabPage tabPage2;
         private TabPage tabPage3;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private Button bBackHome;
+        private ColorDialog colorDialog1;
     }
 }
