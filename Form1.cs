@@ -504,8 +504,7 @@ namespace StravaHeatMapToKMZ
             var onTileCreated = delegate (MemoryStream stream, Tile tile)
             {
                 Bitmap screenBitmap = new(stream);
-                if (mapStyle.SelectedIndex == 0)
-                    screenBitmap.MakeTransparent(Color.White);
+                screenBitmap.MakeTransparent(Color.FromArgb(245,245,245));
 
                 var relativePath = tile.x1 + @"\" + tile.y1 + ".png";
                 var screenPath = folder + relativePath;
