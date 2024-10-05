@@ -1,3 +1,5 @@
+I lost access to my account, so I forked this with a new one.
+
 # Strava Heatmap To Tiles
 Can create slippy tiles and kmz files from strava heatmap
 Slippy tiles can be sent on an android device like a hammerhead karoo to replace base heatmap
