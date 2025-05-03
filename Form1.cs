@@ -146,7 +146,7 @@ namespace StravaHeatMapToKMZ
                 kmlWriter.WriteEndElement();
             };
 
-            var result = await CreateTiles(onTileCreate, TileFormat.jpg, (int)tileZoom.Value);
+            var result = await CreateTiles(onTileCreate, TileFormat.jpg, (int)tileZoom.Value, KmzBgColor);
 
             kmlWriter.WriteEndElement();
             kmlWriter.WriteEndElement();
@@ -283,7 +283,7 @@ namespace StravaHeatMapToKMZ
                         }
                     };
 
-                    var result = await CreateTiles(onTileCreate, usedFormat, 15, tiles);
+                    var result = await CreateTiles(onTileCreate, usedFormat, 15, KmzBgColor, tiles);
                 }
             end:
                 kmzArchive.Dispose();
@@ -339,24 +339,18 @@ namespace StravaHeatMapToKMZ
             none,
         }
 
+        static readonly Brush KmzBgColor = Brushes.WhiteSmoke;
         const int PicBoxSize = 200;
 
         static SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
-        async Task<bool> CreateTiles(Action<MemoryStream, Tile> onTileCreated, TileFormat format, int zoom, List<Tile>? customTiles = null)
+        async Task<bool> CreateTiles(Action<MemoryStream, Tile> onTileCreated, TileFormat format, int zoom, Brush? bgColor = null, List<Tile>? customTiles = null)
         {
-            //if (!CheckUri())
-            //    return false;
-
-
             if (!DownloadGranted)
                 return false;
-
 
             abordWork = false;
 
             SetButtonsState(false);
-
-            var finalFormat = format == TileFormat.png ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg;
 
             progressBar1.Value = 0;
             var tiles = new List<Tile>();
@@ -402,11 +396,9 @@ namespace StravaHeatMapToKMZ
                 newProgressBar.Size = new Size(PicBoxSize, 10);
                 newProgressBar.Style = ProgressBarStyle.Continuous;
 
-                var newPictureBox = new PictureBox();
-                newPictureBox.Enabled = false;
-                newPictureBox.Size = new Size(PicBoxSize, PicBoxSize);
-
-                newFlow.Controls.Add(newPictureBox);
+                var newWebView = new Microsoft.Web.WebView2.WinForms.WebView2();
+                newWebView.Size = new Size(PicBoxSize, PicBoxSize);
+                newFlow.Controls.Add(newWebView);
                 newFlow.Controls.Add(newProgressBar);
 
                 flowLayoutPanel1.Controls.Add(newFlow);
@@ -421,28 +413,21 @@ namespace StravaHeatMapToKMZ
                         return;
 
                     var tile = tileWork[newProgressBar.Value];
-
+                    var url = "https://content-a.strava.com/identified/globalheat/";
                     
-
-                    string[] sub = { "a", "b", "c" };
-                    var usedSub = sub[new Random().Next(sub.Length)];
-
-                    var url_prefix = "https://heatmap-external-" + usedSub + ".strava.com/tiles-auth/";
-                    var url_suffix = "/" + zoom + "/" + tile.x1 + "/" + tile.y1 + ".png";
                     var map_type = activityType.SelectedItem.ToString();
                     if (string.IsNullOrEmpty(map_type))
                         map_type = "all";
                     var map_color = mapStyle.SelectedItem.ToString();
                     if (string.IsNullOrEmpty(map_color))
                         map_color = "hot";
-                    var query_string = "?Key-Pair-Id=" + pair + "&Policy=" + policy + "&Signature=" + signature;
-                    var tile_url = url_prefix + map_type + '/' + map_color + url_suffix + query_string;
-                    //MessageBox.Show(tile_url);
+                    url += map_type + "/" + map_color + "/" + zoom + "/" + tile.x1 + "/" + tile.y1 + ".png";
 
                     try
                     {
-                        newPictureBox.Tag = tile;
-                        newPictureBox.LoadAsync(tile_url);
+                        //Debug.WriteLine(url);
+                        newWebView.Tag = tile;
+                        newWebView.Source = new Uri(url);    
                     }
                     catch
                     {
@@ -452,26 +437,22 @@ namespace StravaHeatMapToKMZ
                     
                 };
 
-                newPictureBox.LoadCompleted += (sender, e) =>
+                newWebView.NavigationCompleted += async (sender, e) =>
                 {
-                    if (e.Error != null)
-                        Debug.WriteLine(e.Error);
+                    if (!e.IsSuccess)
+                        Debug.WriteLine(e.WebErrorStatus);
                     else
                     {
-                        var bmp = new Bitmap(newPictureBox.Image.Width, newPictureBox.Image.Height);
-                        var g = Graphics.FromImage(bmp);
-                        g.FillRectangle(Brushes.WhiteSmoke, 0, 0, newPictureBox.Image.Width, newPictureBox.Image.Height);
-                        g.DrawImage(newPictureBox.Image, 0, 0);
-                        g.Save();
-                        MemoryStream memoryStream = new();
-                        var tile = newPictureBox.Tag as Tile;
+                        
+                        var imgData = await GetImageBytesAsync(newWebView);
+                        MemoryStream memoryStreamOriginal = new(imgData);
+                        var tile = newWebView.Tag as Tile;
                         if (tile != null)
                         {
-                            bmp.Save(memoryStream, finalFormat);
-                            onTileCreated(memoryStream, tile);
+                            var formatedTileStream = ApplyFormatToTileStream(memoryStreamOriginal, format, bgColor);
+                            onTileCreated(formatedTileStream, tile);
                         }
                     }
-
                     progressBar1.Value++;
                     newProgressBar.Value++;
 
@@ -495,6 +476,48 @@ namespace StravaHeatMapToKMZ
             SetButtonsState(true);
             return !abordWork;
 
+        }
+
+        MemoryStream ApplyFormatToTileStream(MemoryStream tileStream, TileFormat format, Brush? bgColor = null)
+        {
+            var image = Image.FromStream(tileStream);
+            var bmp = new Bitmap(image.Width, image.Height);
+            var g = Graphics.FromImage(bmp);
+            if (bgColor != null)
+            {
+                g.FillRectangle(bgColor, 0, 0, image.Width, image.Height);
+            }
+            g.DrawImage(image, 0, 0);
+            g.Save();
+            MemoryStream resultStream = new();
+            var finalFormat = format == TileFormat.png ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg;
+            bmp.Save(resultStream, finalFormat);
+            return resultStream;
+        }
+
+        async Task<byte[]> GetImageBytesAsync(Microsoft.Web.WebView2.WinForms.WebView2 webView, bool debug = false)
+        {
+            var script = @"
+                    function getImageAsBase64()
+                    {
+                        " + (debug ? "debugger;" : "") + @"
+                        var results = document.evaluate('//img', document, null, XPathResult.ANY_TYPE, null);
+                        let img = results.iterateNext();
+                        let canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+
+                        let ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+
+                        let base64String = canvas.toDataURL('image/png');
+                        return base64String;
+                    };
+                    getImageAsBase64()";
+            string base64Data = await webView.ExecuteScriptAsync(script);
+            base64Data = base64Data.Split("base64,")[1].TrimEnd('"');
+            var result = Convert.FromBase64String(base64Data);
+            return result;
         }
 
         async Task CreateAndSaveTile(TileFormat format, string folder, int zoom) // folder end with '\'
@@ -631,7 +654,7 @@ namespace StravaHeatMapToKMZ
                     screenBitmap.Save(tile.tag);
                 };
 
-                await CreateTiles(onTileCreated, TileFormat.png, (int)tileZoom.Value, tiles);
+                await CreateTiles(onTileCreated, TileFormat.png, (int)tileZoom.Value, null, tiles);
 
             }
         }
