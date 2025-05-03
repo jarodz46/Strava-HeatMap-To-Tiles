@@ -626,8 +626,7 @@ namespace StravaHeatMapToKMZ
                 var onTileCreated = delegate (MemoryStream stream, Tile tile)
                 {
                     Bitmap screenBitmap = new(stream);
-                    if (mapStyle.SelectedIndex == 0)
-                        screenBitmap.MakeTransparent(Color.White);
+                    screenBitmap.MakeTransparent(Color.White);
 
                     screenBitmap.Save(tile.tag);
                 };
