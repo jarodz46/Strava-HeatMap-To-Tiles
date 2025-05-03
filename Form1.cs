@@ -36,9 +36,9 @@ namespace StravaHeatMapToKMZ
                 var cookies = await webView21.CoreWebView2.CookieManager.GetCookiesAsync("");
                 foreach (var cookie in cookies)
                 {
-                    if (cookie.Expires > DateTime.UtcNow && cookie.Name == name)
+                    if (cookie.IsSession && cookie.Name == name)
                     {
-                        Debug.WriteLine(cookie.Name + " : " + cookie.Value);
+                        //Debug.WriteLine(cookie.Name + " : " + cookie.Value);
                         return cookie.Value;
                     }
                 }
@@ -684,7 +684,7 @@ namespace StravaHeatMapToKMZ
                 if (e.Cancel)
                     return;
 
-                Debug.WriteLine("tick");
+                //Debug.WriteLine("pair " + pair + " policy " + policy + " signature " + signature);
 
                 await Invoke(getKeys);
 
