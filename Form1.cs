@@ -23,7 +23,7 @@ namespace StravaHeatMapToKMZ
             webView21.Source = new Uri(heatmapurl, UriKind.Absolute);
             backgroundWorker1.RunWorkerAsync();
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
-            mapControl.TileServer = new OpenStreetMapTileServer("stravatiledownloader");
+            mapControl.TileServer = new OpenStreetMapTileServer("StravaHeatMapToKMZ/1.0 (contact: jarod46@free.fr)");
             mapStyle.SelectedIndex = 0;
             activityType.SelectedIndex = 0;
             SetButtonsState(false);
